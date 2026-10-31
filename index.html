@@ -11,28 +11,59 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Us Planner</title>
 <style>
-:root{--bg:#f2f2f7;--card:#fff;--text:#111;--mut:#8a8a8e;--me:#0a84ff;--you:#ff375f;--line:#e5e5ea}
+:root{--bg:#f2f2f7;--card:#fff;--text:#111;--mut:#8a8a8e;--me:#0a84ff;--you:#ff375f;--line:#e5e5ea;--ok:#30b050;--warn:#ff9f0a;--bad:#ff3b30}
 @media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--line:#2c2c2e;--mut:#98989d}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:var(--bg);color:var(--text);font:16px -apple-system,system-ui,sans-serif;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
-header{position:sticky;top:0;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+body{margin:0;background:var(--bg);color:var(--text);font:16px -apple-system,system-ui,sans-serif;padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 4px;z-index:5}
+.top{display:flex;align-items:center;justify-content:space-between}
 h1{font-size:22px;margin:0}
+h2{margin:0 0 10px}
+h3{margin:14px 0 6px;font-size:15px}
 .nav{display:flex;gap:6px;align-items:center}
 button{font:inherit;border:0;border-radius:10px;padding:8px 12px;background:var(--card);color:var(--text)}
 button.pri{background:var(--me);color:#fff}
-button.del{color:var(--you)}
-main{padding:0 12px}
+button.del{color:var(--bad)}
+main{padding:6px 12px}
 .card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}
-.day h3{margin:0 0 6px;font-size:15px}
-.day.today h3{color:var(--me)}
-.chip{display:block;border-left:4px solid var(--me);padding:4px 8px;margin:4px 0;border-radius:4px;background:color-mix(in srgb,var(--me) 10%,transparent)}
-.chip.other{border-color:var(--you);background:color-mix(in srgb,var(--you) 10%,transparent)}
-.chip small{color:var(--mut);display:block}
 .empty{color:var(--mut);font-size:14px}
-.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.hint{font-size:13px;color:var(--mut);padding:0 0 6px}
+small{display:block;color:var(--mut);font-size:13px}
+
+/* tabs + fab */
+.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:6}
 .tabs button{flex:1;border-radius:0;background:none;padding:14px 4px;color:var(--mut)}
 .tabs button.on{color:var(--me);font-weight:600}
 .fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:27px;font-size:30px;line-height:1;padding:0;box-shadow:0 4px 12px #0004;z-index:6}
+
+/* shift pills + brush bar */
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;color:#fff;font-weight:600;font-size:14px;white-space:nowrap}
+.pill.off{background:#8e8e93}
+.pill.none{background:transparent;color:var(--mut);border:1px dashed var(--line);font-weight:400}
+.brush{display:flex;gap:8px;overflow-x:auto;padding:6px 16px 8px;margin:0 -16px;scrollbar-width:none}
+.brush::-webkit-scrollbar{display:none}
+.cb{flex:none;border-radius:999px;padding:9px 14px;color:#fff;font-weight:600;font-size:15px;white-space:nowrap}
+.cb.off{background:#8e8e93}
+.cb.clr,.cb.edit{background:var(--card);color:var(--text);font-weight:500}
+.cb.on{outline:3px solid var(--text);outline-offset:2px}
+
+/* roster */
+.sum{font-size:14px;color:var(--mut);margin:0 4px 8px}
+.sum b{color:var(--text)}
+.rday{cursor:pointer}
+.rday.armed{outline:2px dashed color-mix(in srgb,var(--me) 50%,transparent)}
+.rday .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.rday .hd b{font-size:16px}
+.rday.today .hd b{color:var(--me)}
+.badge{font-size:12px;background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok);padding:2px 8px;border-radius:999px;font-weight:600}
+.srow{display:flex;align-items:center;gap:10px;margin:4px 0}
+.who{width:64px;font-size:14px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mini{font-size:13px;margin-top:6px;padding:4px 8px;border-radius:8px;border-left:3px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.mini.confirmed{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.btnrow{display:flex;gap:8px;margin:4px 0 14px}
+.btnrow button{flex:1}
+
+/* month */
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
 .grid .h{font-size:12px;color:var(--mut);padding:4px 0}
 .cell{padding:8px 0;border-radius:10px;background:none;min-height:46px}
@@ -40,25 +71,51 @@ main{padding:0 12px}
 .cell.tod{font-weight:700;color:var(--me)}
 .cell.sel.tod{color:#fff}
 .dots{height:6px;display:flex;justify-content:center;gap:2px;margin-top:2px}
-.dots i{width:5px;height:5px;border-radius:3px;background:var(--me)}
-.dots i.o{background:var(--you)}
-.row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
-.row b{width:44px;font-size:14px}
-input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--text);max-width:100%}
-input[type=time]{width:105px}
-.sheet{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}
-.sheet.open{display:flex}
-.sheet .in{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
-.sheet input,.sheet textarea{width:100%;margin:5px 0}
+.dots i{width:5px;height:5px;border-radius:3px;background:var(--warn)}
+.dots i.confirmed{background:var(--ok)}
+.dots i.act{background:var(--bad)}
+.cell.sel .dots i{box-shadow:0 0 0 1px #fff8}
+.sec{font-size:13px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em;margin:14px 4px 6px}
+.plan{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.plan:last-child{border-bottom:0}
+.plan b{display:block}
+.tags{display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+.tag{font-size:12px;border-radius:999px;padding:2px 8px;font-weight:600;white-space:nowrap;max-width:140px;overflow:hidden;text-overflow:ellipsis}
+.tag.tentative{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.tag.confirmed{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.tag.act{background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)}
+.todo{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.todo:last-child{border-bottom:0}
+.todo input{width:24px;height:24px;flex:none}
+.todo .info{flex:1;cursor:pointer}
+.todo.over small{color:var(--bad)}
+.dayline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 8px}
+
+/* lists */
 .note{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .note.done span{text-decoration:line-through;color:var(--mut)}
 .note span{flex:1}
 .note input{width:22px;height:22px}
+
+/* sheet + forms */
+.sheet{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}
+.sheet.open{display:flex}
+.sheet .in{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--text);max-width:100%}
+.sheet input[type=text],.sheet input:not([type]),.sheet textarea,.sheet input[type=date]{width:100%;margin:5px 0}
+input[type=time]{width:120px}
+.row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.row>button{flex:none}
+.chk{display:flex;gap:8px;align-items:center;margin:10px 0}
+.chk input{width:20px;height:20px}
+.seg{display:flex;background:var(--bg);border-radius:10px;padding:3px;margin:8px 0}
+.seg button{flex:1;background:none}
+.seg button.on{background:var(--card);font-weight:600;box-shadow:0 1px 3px #0003}
+.sw{width:30px;height:30px;border-radius:15px;padding:0}
+.sw.on{outline:3px solid var(--text);outline-offset:2px}
+.sw.auto{width:auto;padding:0 12px;border-radius:15px;background:var(--bg)}
 #join{padding:24px}
 #join input{width:100%;margin:6px 0 12px}
-.legend{font-size:13px;color:var(--mut);margin:0 4px 10px}
-.dot{display:inline-block;width:9px;height:9px;border-radius:5px;background:var(--me);margin-right:4px}
-.dot.o{background:var(--you);margin-left:10px}
 </style>
 </head>
 <body>
@@ -69,15 +126,18 @@ input[type=time]{width:105px}
   <label>Space code</label><input id="jCode" placeholder="e.g. sam-and-alex-7f3k" autocapitalize="none" autocomplete="off">
   <button class="pri" id="jGo" style="width:100%">Start</button>
   <p class="empty" id="jErr"></p>
-  <p class="empty">Tip: make the code long and random, anyone with it can see your planner.</p>
+  <p class="empty">Tip: make the code long and random. Anyone with it can see your planner.</p>
 </div>
 
 <div id="app" style="display:none">
-<header><h1 id="title"></h1><div class="nav"><button id="prev">‹</button><button id="today">Today</button><button id="next">›</button></div></header>
+<header>
+  <div class="top"><h1 id="title"></h1><div class="nav"><button id="prev">‹</button><button id="today">Today</button><button id="next">›</button></div></div>
+  <div id="sub"></div>
+</header>
 <main id="view"></main>
 <button class="fab pri" id="fab">+</button>
 <div class="tabs">
-  <button data-t="week" class="on">Week</button><button data-t="month">Month</button><button data-t="roster">Roster</button><button data-t="notes">Lists</button>
+  <button data-t="roster" class="on">Roster</button><button data-t="month">Month</button><button data-t="notes">Lists</button>
 </div>
 </div>
 
@@ -89,6 +149,7 @@ input[type=time]{width:105px}
 <script src="config.js"></script>
 <script>
 const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const pad=n=>String(n).padStart(2,'0');
 const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
@@ -97,14 +158,43 @@ const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
 const monday=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const dayName=d=>DAYS[(d.getDay()+6)%7];
+const dateLabel=k=>{const d=parse(k);return `${dayName(d)} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`};
 
-let me=localStorage.me, code=localStorage.code, tab='week';
+/* time helpers */
+const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+const t12=t=>{if(!t)return'';let[h,m]=t.split(':').map(Number);const ap=h>=12?'pm':'am';h=h%12||12;return m?`${h}:${pad(m)}${ap}`:`${h}${ap}`};
+const range=(s,e)=>`${t12(s)}–${t12(e)}`;
+const autoColor=s=>{const h=+String(s||'9').split(':')[0];return h<10?'#ff9f0a':h<16?'#bf5af2':'#5e5ce6'};
+const hrs=(s,e)=>{let a=toMin(s),b=toMin(e);if(b<=a)b+=1440;return(b-a)/60};
+const nf=n=>String(Math.round(n*10)/10);
+
+let me=localStorage.me, code=localStorage.code, tab='roster';
 let weekStart=monday(new Date()), monthRef=new Date(), sel=fmt(new Date());
-let items=[], col=null;
+let brush=null; // {kind:'tpl',id} | {kind:'off'} | {kind:'clear'}
+let items=[], col=null, sheetFn=null, tplSig='';
 
+const meId=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_');
+const sid=(by,k)=>`shift_${meId(by)}_${k}`;
+const shiftOf=(by,k)=>items.find(i=>i.id===sid(by,k));
+const partner=()=>{const p=items.find(i=>i.by&&i.by!==me);return p?p.by:null};
+const templates=()=>items.filter(i=>i.type==='template'&&i.by===me).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+const plansOn=k=>items.filter(i=>i.type==='plan'&&i.date===k).sort(byDT);
+const byDT=(a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''));
+const needsAction=p=>p.action&&!p.actionDone;
+
+function pill(s){
+  if(!s)return '<span class="pill none">–</span>';
+  if(s.shiftType==='off')return '<span class="pill off">Off</span>';
+  if(!s.start||!s.end)return '<span class="pill none">–</span>';
+  const ov=toMin(s.end)<=toMin(s.start)?' +1':'';
+  return `<span class="pill" style="background:${s.color||autoColor(s.start)}">${range(s.start,s.end)}${ov}</span>`;
+}
+
+/* ---------- boot ---------- */
 function boot(){
   if(!window.FIREBASE_CONFIG||FIREBASE_CONFIG.apiKey==='PASTE_HERE'){
-    document.body.innerHTML='<div style="padding:24px"><h2>Almost there</h2><p>Open <b>config.js</b> and paste your Firebase config (see the setup steps).</p></div>';return;}
+    document.body.innerHTML='<div style="padding:24px"><h2>Almost there</h2><p>Open <b>config.js</b> and paste your Firebase config.</p></div>';return;}
   if(!me||!code){$('#join').style.display='block';$('#jName').value=me||'';$('#jCode').value=code||'';return;}
   $('#join').style.display='none';$('#app').style.display='block';
   firebase.initializeApp(FIREBASE_CONFIG);
@@ -112,120 +202,256 @@ function boot(){
   db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
   firebase.auth().signInAnonymously().then(()=>{
     col=db.collection('spaces').doc(code).collection('items');
-    col.onSnapshot(s=>{items=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));
+    col.onSnapshot(s=>{
+      items=s.docs.map(d=>({id:d.id,...d.data()}));
+      render();
+      if(sheetFn===openTplSheet&&templates().map(t=>t.id).join()!==tplSig)openTplSheet();
+    },e=>console.error(e));
   }).catch(e=>alert('Sign-in failed: '+e.message));
   render();
 }
 $('#jGo').onclick=()=>{
   const n=$('#jName').value.trim(),c=$('#jCode').value.trim().toLowerCase();
   if(!n||c.length<6){$('#jErr').textContent='Enter your name and a code of 6+ characters.';return}
-  localStorage.me=me=n;localStorage.code=code=c;location.reload();
+  localStorage.me=n;localStorage.code=c;location.reload();
 };
 
-const forDate=d=>items.filter(i=>i.date===d&&i.type!=='note').sort((a,b)=>(a.type==='shift'?-1:0)-(b.type==='shift'?-1:0)||(a.start||'').localeCompare(b.start||''));
-function chip(i){
-  const mine=i.by===me,t=i.start?`${i.start}${i.end?'–'+i.end:''}`:'';
-  if(i.type==='shift')return `<div class="chip ${mine?'':'other'}">${esc(i.by)}: ${i.shiftType==='off'?'Day off':'Work '+t}</div>`;
-  return `<div class="chip ${mine?'':'other'}" data-id="${i.id}"><b>${esc(i.title)}</b><small>${t?t+' · ':''}${esc(i.by)}${i.notes?' · '+esc(i.notes):''}</small></div>`;
-}
-
+/* ---------- render ---------- */
 function render(){
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
-  $('#fab').style.display=tab==='roster'?'none':'block';
-  const v=$('#view');
-  if(tab==='week'||tab==='roster'){
+  $$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $('#fab').style.display=tab==='month'?'block':'none';
+  ['#prev','#next','#today'].forEach(s=>$(s).style.visibility=tab==='notes'?'hidden':'visible');
+  const v=$('#view'),sub=$('#sub');
+  if(tab==='roster'){
     const e=addDays(weekStart,6);
     $('#title').textContent=`${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} – ${e.getDate()} ${MONTHS[e.getMonth()].slice(0,3)}`;
-  }else if(tab==='month')$('#title').textContent=`${MONTHS[monthRef.getMonth()]} ${monthRef.getFullYear()}`;
-  else $('#title').textContent='Lists';
-  $('#prev').style.visibility=$('#next').style.visibility=$('#today').style.visibility=tab==='notes'?'hidden':'visible';
-  if(tab==='week')v.innerHTML=weekView();
-  else if(tab==='month')v.innerHTML=monthView();
-  else if(tab==='roster'){if(document.activeElement&&v.contains(document.activeElement))return;v.innerHTML=rosterView();}
-  else v.innerHTML=notesView();
+    sub.innerHTML=brushBar();v.innerHTML=rosterView();
+  }else if(tab==='month'){
+    $('#title').textContent=`${MONTHS[monthRef.getMonth()]} ${monthRef.getFullYear()}`;
+    sub.innerHTML='';v.innerHTML=monthView();
+  }else{
+    $('#title').textContent='Lists';sub.innerHTML='';
+    if($('#noteList')){$('#noteList').innerHTML=noteRows();bindNotes();return}
+    v.innerHTML=notesView();
+    $('#addNote').onclick=addNote;
+    $('#newNote').onkeydown=e=>{if(e.key==='Enter')addNote()};
+    bindNotes();return;
+  }
   bind();
 }
-const legend=()=>`<div class="legend"><span class="dot"></span>${esc(me)} <span class="dot o"></span>Partner</div>`;
 
-function weekView(){
-  let h=legend();
-  for(let i=0;i<7;i++){
-    const d=addDays(weekStart,i),k=fmt(d),list=forDate(k);
-    h+=`<div class="card day ${k===fmt(new Date())?'today':''}"><h3>${DAYS[i]} ${d.getDate()}</h3>${list.map(chip).join('')||'<div class="empty">Nothing planned</div>'}</div>`;
-  }
-  return h;
+/* ---------- roster ---------- */
+function brushBar(){
+  const tpls=templates();
+  let h='<div class="brush">';
+  tpls.forEach(t=>{
+    const on=brush&&brush.kind==='tpl'&&brush.id===t.id;
+    h+=`<button class="cb ${on?'on':''}" data-b="tpl:${t.id}" style="background:${t.color||autoColor(t.start)}">${range(t.start,t.end)}</button>`;
+  });
+  h+=`<button class="cb off ${brush&&brush.kind==='off'?'on':''}" data-b="off">Off</button>`;
+  h+=`<button class="cb clr ${brush&&brush.kind==='clear'?'on':''}" data-b="clear">Clear</button>`;
+  h+=`<button class="cb edit" data-b="edit">${tpls.length?'Edit':'+ Shift templates'}</button></div>`;
+  let hint;
+  if(brush){
+    const what=brush.kind==='off'?'Day off':brush.kind==='clear'?'Clear':range(...(()=>{const t=items.find(i=>i.id===brush.id);return t?[t.start,t.end]:['',''];})());
+    hint=`<b>${what}</b> selected. Tap the days to apply, tap it again to stop.`;
+  }else hint=tpls.length?'Pick a shift, then tap the days. Tap a day with nothing picked for custom times.':'Add your usual shifts so each day is one tap.';
+  return h+`<div class="hint">${hint}</div>`;
 }
-function monthView(){
-  const y=monthRef.getFullYear(),m=monthRef.getMonth();
-  const first=new Date(y,m,1),start=monday(first);
-  let h=legend()+'<div class="card"><div class="grid">'+DAYS.map(d=>`<div class="h">${d[0]}</div>`).join('');
-  for(let i=0;i<42;i++){
-    const d=addDays(start,i),k=fmt(d),l=forDate(k);
-    const dim=d.getMonth()!==m?'style="opacity:.35"':'';
-    h+=`<button class="cell ${k===sel?'sel':''} ${k===fmt(new Date())?'tod':''}" data-day="${k}" ${dim}>${d.getDate()}<div class="dots">${[...new Set(l.map(x=>x.by===me?'':'o'))].map(c=>`<i class="${c}"></i>`).join('')}</div></button>`;
-  }
-  h+='</div></div>';
-  const d=parse(sel);
-  h+=`<div class="card day"><h3>${DAYS[(d.getDay()+6)%7]} ${d.getDate()} ${MONTHS[d.getMonth()]}</h3>${forDate(sel).map(chip).join('')||'<div class="empty">Nothing planned</div>'}</div>`;
-  return h;
+
+function weekHours(by){
+  let t=0;
+  for(let i=0;i<7;i++){const s=shiftOf(by,fmt(addDays(weekStart,i)));if(s&&s.shiftType==='work'&&s.start&&s.end)t+=hrs(s.start,s.end)}
+  return t;
 }
+
 function rosterView(){
-  let h='<p class="legend">Set your shifts for the week. Your partner sees them straight away.</p>';
+  const p=partner(),today=fmt(new Date());
+  let h=`<div class="sum">Rostered this week: Me <b>${nf(weekHours(me))}h</b>${p?` · ${esc(p)} <b>${nf(weekHours(p))}h</b>`:''}</div>`;
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i),k=fmt(d);
-    const mine=items.find(x=>x.id===`shift_${me}_${k}`);
-    const theirs=items.filter(x=>x.type==='shift'&&x.date===k&&x.by!==me);
-    h+=`<div class="card"><div class="row"><b>${DAYS[i]} ${d.getDate()}</b>
-      <select data-k="${k}" data-f="shiftType"><option value="">–</option><option value="work" ${mine?.shiftType==='work'?'selected':''}>Work</option><option value="off" ${mine?.shiftType==='off'?'selected':''}>Off</option></select>
-      <input type="time" data-k="${k}" data-f="start" value="${mine?.start||''}" ${mine?.shiftType==='work'?'':'disabled'}>
-      <input type="time" data-k="${k}" data-f="end" value="${mine?.end||''}" ${mine?.shiftType==='work'?'':'disabled'}></div>
-      ${theirs.map(chip).join('')}</div>`;
+    const mine=shiftOf(me,k),theirs=p?shiftOf(p,k):null;
+    const both=mine&&theirs&&mine.shiftType==='off'&&theirs.shiftType==='off';
+    h+=`<div class="card rday ${k===today?'today':''} ${brush?'armed':''}" data-rd="${k}">
+      <div class="hd"><b>${DAYS[i]} ${d.getDate()}</b>${both?'<span class="badge">Both off</span>':''}</div>
+      <div class="srow"><span class="who">Me</span>${pill(mine)}</div>
+      ${p?`<div class="srow"><span class="who">${esc(p)}</span>${pill(theirs)}</div>`:''}
+      ${plansOn(k).map(x=>`<div class="mini ${x.status}" data-plan="${x.id}">${x.time?t12(x.time)+' · ':''}${esc(x.title)}${needsAction(x)?' ⚠︎':''}</div>`).join('')}
+    </div>`;
   }
+  h+=`<div class="btnrow"><button id="copyLast">Copy my shifts from last week</button></div>`;
   return h;
 }
-function notesView(){
-  const n=items.filter(i=>i.type==='note').sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.createdAt||0)-(a.createdAt||0));
-  return `<div class="card"><div class="row"><input id="newNote" placeholder="Add to list (groceries, to-do, ideas…)" style="flex:1"><button class="pri" id="addNote">Add</button></div>
-  ${n.map(i=>`<div class="note ${i.done?'done':''}"><input type="checkbox" data-n="${i.id}" ${i.done?'checked':''}><span>${esc(i.title)}</span><button class="del" data-rm="${i.id}">✕</button></div>`).join('')||'<div class="empty">Nothing here yet</div>'}</div>`;
+
+function setShift(k,data){return col.doc(sid(me,k)).set({type:'shift',date:k,by:me,createdAt:Date.now(),...data})}
+
+function applyDay(k){
+  if(!brush){openDaySheet(k);return}
+  if(brush.kind==='clear'){col.doc(sid(me,k)).delete();return}
+  if(brush.kind==='off'){setShift(k,{shiftType:'off',start:'',end:'',color:''});return}
+  const t=items.find(i=>i.id===brush.id);
+  if(!t){brush=null;render();return}
+  setShift(k,{shiftType:'work',start:t.start,end:t.end,color:t.color||autoColor(t.start)});
 }
 
-function bind(){
-  document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{sel=b.dataset.day;render()});
-  document.querySelectorAll('.chip[data-id]').forEach(c=>c.onclick=()=>openSheet(items.find(i=>i.id===c.dataset.id)));
-  document.querySelectorAll('[data-f]').forEach(el=>el.onchange=()=>saveShift(el.dataset.k));
-  const an=$('#addNote');if(an)an.onclick=()=>{const t=$('#newNote').value.trim();if(t)col.add({type:'note',title:t,by:me,done:false,createdAt:Date.now()})};
-  document.querySelectorAll('[data-n]').forEach(c=>c.onchange=()=>col.doc(c.dataset.n).update({done:c.checked}));
-  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>col.doc(b.dataset.rm).delete());
-}
-function saveShift(k){
-  const q=f=>document.querySelector(`[data-k="${k}"][data-f="${f}"]`).value;
-  const t=q('shiftType'),ref=col.doc(`shift_${me}_${k}`);
-  if(!t){ref.delete();return}
-  ref.set({type:'shift',date:k,by:me,shiftType:t,start:t==='work'?q('start'):'',end:t==='work'?q('end'):'',createdAt:Date.now()}).then(()=>{document.activeElement.blur();render()});
+function copyLast(){
+  if(!confirm("Copy your shifts from last week into this week? This replaces any shifts you've already set this week."))return;
+  const b=col.firestore.batch();
+  for(let i=0;i<7;i++){
+    const from=fmt(addDays(weekStart,i-7)),to=fmt(addDays(weekStart,i));
+    const s=shiftOf(me,from),ref=col.doc(sid(me,to));
+    if(s){const{id,...rest}=s;b.set(ref,{...rest,date:to,createdAt:Date.now()})}else b.delete(ref);
+  }
+  b.commit();
 }
 
-function openSheet(it){
-  it=it||{date:tab==='month'?sel:fmt(new Date())};
-  $('#sheetIn').innerHTML=`<h2 style="margin-top:0">${it.id?'Edit':'New'} event</h2>
-   <input id="eT" placeholder="What's on?" value="${esc(it.title||'')}">
-   <input id="eD" type="date" value="${it.date}">
-   <div class="row"><input id="eS" type="time" value="${it.start||''}"> to <input id="eE" type="time" value="${it.end||''}"></div>
-   <textarea id="eN" rows="2" placeholder="Notes (optional)">${esc(it.notes||'')}</textarea>
-   <div class="row"><button class="pri" id="eSave" style="flex:1">Save</button><button id="eCancel">Cancel</button>${it.id?'<button class="del" id="eDel">Delete</button>':''}</div>`;
-  $('#sheet').classList.add('open');
-  $('#eCancel').onclick=closeSheet;
-  $('#eSave').onclick=()=>{
-    const title=$('#eT').value.trim();if(!title){$('#eT').focus();return}
-    const data={type:'event',title,date:$('#eD').value,start:$('#eS').value,end:$('#eE').value,notes:$('#eN').value.trim()};
-    (it.id?col.doc(it.id).update(data):col.add({...data,by:me,createdAt:Date.now()})).then(closeSheet);
+function openDaySheet(k){
+  const s=shiftOf(me,k),d=parse(k);
+  sheet(`<h2>${dayName(d)} ${d.getDate()} ${MONTHS[d.getMonth()]}</h2>
+   <div class="row"><input id="dS" type="time" value="${s&&s.start||''}"> to <input id="dE" type="time" value="${s&&s.end||''}"></div>
+   <label class="chk"><input type="checkbox" id="dT"> Save these times as a template</label>
+   <div class="row"><button class="pri" id="dSave" style="flex:1">Save shift</button></div>
+   <div class="row"><button id="dOff">Day off</button><button id="dClr" class="del">Clear</button><button id="dPlan">Add plan</button><button id="dX">Close</button></div>`);
+  $('#dX').onclick=closeSheet;
+  $('#dOff').onclick=()=>{setShift(k,{shiftType:'off',start:'',end:'',color:''});closeSheet()};
+  $('#dClr').onclick=()=>{col.doc(sid(me,k)).delete();closeSheet()};
+  $('#dPlan').onclick=()=>openPlanSheet({date:k,status:'tentative'});
+  $('#dSave').onclick=()=>{
+    const st=$('#dS').value,en=$('#dE').value;
+    if(!st||!en){alert('Set a start and end time.');return}
+    const color=autoColor(st);
+    setShift(k,{shiftType:'work',start:st,end:en,color});
+    if($('#dT').checked&&!templates().some(t=>t.start===st&&t.end===en))col.add({type:'template',by:me,start:st,end:en,color,createdAt:Date.now()});
+    closeSheet();
   };
-  if(it.id)$('#eDel').onclick=()=>{if(confirm('Delete this event?'))col.doc(it.id).delete().then(closeSheet)};
 }
-const closeSheet=()=>$('#sheet').classList.remove('open');
-$('#sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
-$('#fab').onclick=()=>tab==='notes'?($('#newNote')&&$('#newNote').focus()):openSheet();
 
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+function openTplSheet(){
+  const tpls=templates();
+  tplSig=tpls.map(t=>t.id).join();
+  let color='';
+  sheet(`<h2>My shift templates</h2>
+   ${tpls.length?tpls.map(t=>`<div class="note"><span>${pill(t)}</span><button class="del" data-del="${t.id}">✕</button></div>`).join('')
+     :'<p class="empty">No templates yet.</p><div class="row"><button id="tEx">Add examples (9–5, 11–7, 7–3:30)</button></div>'}
+   <h3>New template</h3>
+   <div class="row"><input id="tS" type="time"> to <input id="tE" type="time"></div>
+   <div class="row" id="tC"><button class="sw auto on" data-c="">Auto</button>
+     ${['#ff9f0a','#bf5af2','#5e5ce6','#30b0c7','#30d158','#ff375f'].map(c=>`<button class="sw" data-c="${c}" style="background:${c}"></button>`).join('')}</div>
+   <div class="hint">Auto colours by start time: early = orange, mid-day = purple, afternoon = blue.</div>
+   <div class="row"><button class="pri" id="tAdd" style="flex:1">Add template</button><button id="tX">Done</button></div>`,openTplSheet);
+  $('#tX').onclick=closeSheet;
+  $$('#tC .sw').forEach(b=>b.onclick=()=>{color=b.dataset.c;$$('#tC .sw').forEach(x=>x.classList.toggle('on',x===b))});
+  $$('[data-del]').forEach(b=>b.onclick=()=>{
+    if(brush&&brush.id===b.dataset.del)brush=null;
+    col.doc(b.dataset.del).delete();
+  });
+  const ex=$('#tEx');
+  if(ex)ex.onclick=()=>{[['09:00','17:00'],['11:00','19:00'],['07:00','15:30']].forEach(([s,e])=>col.add({type:'template',by:me,start:s,end:e,color:autoColor(s),createdAt:Date.now()}))};
+  $('#tAdd').onclick=()=>{
+    const s=$('#tS').value,e=$('#tE').value;
+    if(!s||!e){alert('Set a start and end time.');return}
+    col.add({type:'template',by:me,start:s,end:e,color:color||autoColor(s),createdAt:Date.now()});
+  };
+}
+
+/* ---------- month ---------- */
+function planRow(p){
+  const need=needsAction(p);
+  return `<div class="plan" data-plan="${p.id}"><div><b>${esc(p.title)}</b>
+    <small>${dateLabel(p.date)}${p.time?' · '+t12(p.time):''} · ${esc(p.by)}</small>${p.notes?`<small>${esc(p.notes)}</small>`:''}</div>
+    <div class="tags"><span class="tag ${p.status==='confirmed'?'confirmed':'tentative'}">${p.status==='confirmed'?'Confirmed':'Tentative'}</span>${need?`<span class="tag act">${esc(p.action)}</span>`:''}</div></div>`;
+}
+
+function monthView(){
+  const y=monthRef.getFullYear(),m=monthRef.getMonth(),today=fmt(new Date());
+  const plans=items.filter(i=>i.type==='plan');
+  const pending=plans.filter(needsAction).sort(byDT);
+  let h='';
+  if(pending.length){
+    h+=`<div class="sec">To action</div><div class="card">${pending.map(p=>`
+      <div class="todo ${p.date<today?'over':''}"><input type="checkbox" data-act="${p.id}"><div class="info" data-plan="${p.id}"><b>${esc(p.action)}</b><small>${esc(p.title)} · ${dateLabel(p.date)}${p.date<today?' · overdue':''}</small></div></div>`).join('')}</div>`;
+  }
+  const start=monday(new Date(y,m,1));
+  h+='<div class="card"><div class="grid">'+DAYS.map(d=>`<div class="h">${d[0]}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d=addDays(start,i),k=fmt(d),pl=plansOn(k);
+    const kinds=[...new Set(pl.map(x=>needsAction(x)?'act':x.status==='confirmed'?'confirmed':'tentative'))];
+    h+=`<button class="cell ${k===sel?'sel':''} ${k===today?'tod':''}" data-day="${k}" ${d.getMonth()!==m?'style="opacity:.35"':''}>${d.getDate()}<div class="dots">${kinds.map(c=>`<i class="${c}"></i>`).join('')}</div></button>`;
+  }
+  h+='</div><div class="hint" style="margin-top:8px"><span style="color:var(--warn)">●</span> tentative &nbsp;<span style="color:var(--ok)">●</span> confirmed &nbsp;<span style="color:var(--bad)">●</span> needs action</div></div>';
+
+  const sd=parse(sel),p=partner(),sp=plansOn(sel);
+  h+=`<div class="sec">${dateLabel(sel)}</div><div class="card"><div class="dayline"><span class="who">Me</span>${pill(shiftOf(me,sel))}${p?`<span class="who">${esc(p)}</span>${pill(shiftOf(p,sel))}`:''}</div>
+    ${sp.length?sp.map(planRow).join(''):'<div class="empty">No plans added for this day.</div>'}</div>`;
+
+  const prefix=`${y}-${pad(m+1)}`;
+  const mp=plans.filter(x=>x.date&&x.date.startsWith(prefix)).sort(byDT);
+  h+=`<div class="sec">All plans in ${MONTHS[m]}</div><div class="card">${mp.length?mp.map(planRow).join(''):'<div class="empty">Nothing added yet. Tap + to add a plan, booking or ticket to sort.</div>'}</div>`;
+  return h;
+}
+
+function openPlanSheet(it){
+  it=it||{date:tab==='month'?sel:fmt(new Date()),status:'tentative'};
+  let st=it.status==='confirmed'?'confirmed':'tentative';
+  sheet(`<h2>${it.id?'Edit plan':'New plan'}</h2>
+   <input id="pT" type="text" placeholder="What's the plan?" value="${esc(it.title||'')}">
+   <div class="row"><input id="pD" type="date" value="${it.date}"><input id="pTm" type="time" value="${it.time||''}"></div>
+   <div class="seg"><button data-st="tentative" class="${st==='tentative'?'on':''}">Tentative</button><button data-st="confirmed" class="${st==='confirmed'?'on':''}">Confirmed</button></div>
+   <label class="chk"><input type="checkbox" id="pA" ${it.action?'checked':''}> Needs action (booking, tickets…)</label>
+   <input id="pAT" type="text" placeholder="What needs doing? e.g. Book tickets" value="${esc(it.action||'')}" style="${it.action?'':'display:none'}">
+   <textarea id="pN" rows="2" placeholder="Notes (optional)">${esc(it.notes||'')}</textarea>
+   <div class="row"><button class="pri" id="pSave" style="flex:1">Save</button><button id="pX">Cancel</button>${it.id?'<button class="del" id="pDel">Delete</button>':''}</div>`);
+  $$('.seg button').forEach(b=>b.onclick=()=>{st=b.dataset.st;$$('.seg button').forEach(x=>x.classList.toggle('on',x===b))});
+  $('#pA').onchange=()=>{$('#pAT').style.display=$('#pA').checked?'block':'none';if($('#pA').checked)$('#pAT').focus()};
+  $('#pX').onclick=closeSheet;
+  $('#pSave').onclick=()=>{
+    const title=$('#pT').value.trim();if(!title){$('#pT').focus();return}
+    const needs=$('#pA').checked;
+    const data={type:'plan',title,date:$('#pD').value,time:$('#pTm').value,status:st,
+      action:needs?($('#pAT').value.trim()||'Action needed'):'',actionDone:needs&&it.actionDone?true:false,notes:$('#pN').value.trim()};
+    if(!data.date){alert('Pick a date.');return}
+    (it.id?col.doc(it.id).update(data):col.add({...data,by:me,createdAt:Date.now()}));
+    closeSheet();
+  };
+  if(it.id)$('#pDel').onclick=()=>{if(confirm('Delete this plan?')){col.doc(it.id).delete();closeSheet()}};
+}
+
+/* ---------- lists ---------- */
+function noteRows(){
+  const n=items.filter(i=>i.type==='note').sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.createdAt||0)-(a.createdAt||0));
+  return n.map(i=>`<div class="note ${i.done?'done':''}"><input type="checkbox" data-n="${i.id}" ${i.done?'checked':''}><span>${esc(i.title)}</span><button class="del" data-rm="${i.id}">✕</button></div>`).join('')||'<div class="empty">Nothing here yet</div>';
+}
+function notesView(){
+  return `<div class="card"><div class="row"><input id="newNote" placeholder="Add to list (groceries, to-do, ideas…)" style="flex:1"><button class="pri" id="addNote">Add</button></div><div id="noteList">${noteRows()}</div></div>`;
+}
+function addNote(){const el=$('#newNote'),t=el.value.trim();if(!t)return;el.value='';col.add({type:'note',title:t,by:me,done:false,createdAt:Date.now()})}
+function bindNotes(){
+  $$('[data-n]').forEach(c=>c.onchange=()=>col.doc(c.dataset.n).update({done:c.checked}));
+  $$('[data-rm]').forEach(b=>b.onclick=()=>col.doc(b.dataset.rm).delete());
+}
+
+/* ---------- wiring ---------- */
+function bind(){
+  $$('[data-b]').forEach(b=>b.onclick=()=>{
+    const v=b.dataset.b;
+    if(v==='edit'){openTplSheet();return}
+    const nb=v==='off'?{kind:'off'}:v==='clear'?{kind:'clear'}:{kind:'tpl',id:v.slice(4)};
+    brush=brush&&JSON.stringify(brush)===JSON.stringify(nb)?null:nb;
+    render();
+  });
+  $$('[data-rd]').forEach(c=>c.onclick=()=>applyDay(c.dataset.rd));
+  $$('[data-plan]').forEach(c=>c.onclick=e=>{e.stopPropagation();openPlanSheet(items.find(i=>i.id===c.dataset.plan))});
+  $$('[data-day]').forEach(b=>b.onclick=()=>{sel=b.dataset.day;render()});
+  $$('[data-act]').forEach(c=>c.onchange=()=>col.doc(c.dataset.act).update({actionDone:true}));
+  const cl=$('#copyLast');if(cl)cl.onclick=copyLast;
+}
+
+function sheet(html,fn){$('#sheetIn').innerHTML=html;$('#sheet').classList.add('open');sheetFn=fn||null}
+const closeSheet=()=>{$('#sheet').classList.remove('open');sheetFn=null};
+$('#sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
+$('#fab').onclick=()=>openPlanSheet();
+
+$$('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
 $('#prev').onclick=()=>{if(tab==='month')monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()-1,1);else weekStart=addDays(weekStart,-7);render()};
 $('#next').onclick=()=>{if(tab==='month')monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()+1,1);else weekStart=addDays(weekStart,7);render()};
 $('#today').onclick=()=>{weekStart=monday(new Date());monthRef=new Date();sel=fmt(new Date());render()};
