@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Us Planner">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Us Planner</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--text:#111;--mut:#8a8a8e;--me:#0a84ff;--you:#ff375f;--line:#e5e5ea}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--text:#f2f2f7;--line:#2c2c2e;--mut:#98989d}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font:16px -apple-system,system-ui,sans-serif;padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;background:var(--bg);padding:calc(10px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+h1{font-size:22px;margin:0}
+.nav{display:flex;gap:6px;align-items:center}
+button{font:inherit;border:0;border-radius:10px;padding:8px 12px;background:var(--card);color:var(--text)}
+button.pri{background:var(--me);color:#fff}
+button.del{color:var(--you)}
+main{padding:0 12px}
+.card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:10px}
+.day h3{margin:0 0 6px;font-size:15px}
+.day.today h3{color:var(--me)}
+.chip{display:block;border-left:4px solid var(--me);padding:4px 8px;margin:4px 0;border-radius:4px;background:color-mix(in srgb,var(--me) 10%,transparent)}
+.chip.other{border-color:var(--you);background:color-mix(in srgb,var(--you) 10%,transparent)}
+.chip small{color:var(--mut);display:block}
+.empty{color:var(--mut);font-size:14px}
+.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{flex:1;border-radius:0;background:none;padding:14px 4px;color:var(--mut)}
+.tabs button.on{color:var(--me);font-weight:600}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));width:54px;height:54px;border-radius:27px;font-size:30px;line-height:1;padding:0;box-shadow:0 4px 12px #0004;z-index:6}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.grid .h{font-size:12px;color:var(--mut);padding:4px 0}
+.cell{padding:8px 0;border-radius:10px;background:none;min-height:46px}
+.cell.sel{background:var(--me);color:#fff}
+.cell.tod{font-weight:700;color:var(--me)}
+.cell.sel.tod{color:#fff}
+.dots{height:6px;display:flex;justify-content:center;gap:2px;margin-top:2px}
+.dots i{width:5px;height:5px;border-radius:3px;background:var(--me)}
+.dots i.o{background:var(--you)}
+.row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.row b{width:44px;font-size:14px}
+input,select,textarea{font:inherit;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--bg);color:var(--text);max-width:100%}
+input[type=time]{width:105px}
+.sheet{position:fixed;inset:0;background:#0007;display:none;align-items:flex-end;z-index:10}
+.sheet.open{display:flex}
+.sheet .in{background:var(--card);width:100%;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto}
+.sheet input,.sheet textarea{width:100%;margin:5px 0}
+.note{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.note.done span{text-decoration:line-through;color:var(--mut)}
+.note span{flex:1}
+.note input{width:22px;height:22px}
+#join{padding:24px}
+#join input{width:100%;margin:6px 0 12px}
+.legend{font-size:13px;color:var(--mut);margin:0 4px 10px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:5px;background:var(--me);margin-right:4px}
+.dot.o{background:var(--you);margin-left:10px}
+</style>
+</head>
+<body>
+<div id="join" style="display:none">
+  <h1>Us Planner</h1>
+  <p class="empty">Enter the same space code on both phones to sync.</p>
+  <label>Your name</label><input id="jName" placeholder="e.g. Sam" autocomplete="off">
+  <label>Space code</label><input id="jCode" placeholder="e.g. sam-and-alex-7f3k" autocapitalize="none" autocomplete="off">
+  <button class="pri" id="jGo" style="width:100%">Start</button>
+  <p class="empty" id="jErr"></p>
+  <p class="empty">Tip: make the code long and random, anyone with it can see your planner.</p>
+</div>
+
+<div id="app" style="display:none">
+<header><h1 id="title"></h1><div class="nav"><button id="prev">‹</button><button id="today">Today</button><button id="next">›</button></div></header>
+<main id="view"></main>
+<button class="fab pri" id="fab">+</button>
+<div class="tabs">
+  <button data-t="week" class="on">Week</button><button data-t="month">Month</button><button data-t="roster">Roster</button><button data-t="notes">Lists</button>
+</div>
+</div>
+
+<div class="sheet" id="sheet"><div class="in" id="sheetIn"></div></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const monday=d=>{const x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let me=localStorage.me, code=localStorage.code, tab='week';
+let weekStart=monday(new Date()), monthRef=new Date(), sel=fmt(new Date());
+let items=[], col=null;
+
+function boot(){
+  if(!window.FIREBASE_CONFIG||FIREBASE_CONFIG.apiKey==='PASTE_HERE'){
+    document.body.innerHTML='<div style="padding:24px"><h2>Almost there</h2><p>Open <b>config.js</b> and paste your Firebase config (see the setup steps).</p></div>';return;}
+  if(!me||!code){$('#join').style.display='block';$('#jName').value=me||'';$('#jCode').value=code||'';return;}
+  $('#join').style.display='none';$('#app').style.display='block';
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db=firebase.firestore();
+  db.enablePersistence({synchronizeTabs:true}).catch(()=>{});
+  firebase.auth().signInAnonymously().then(()=>{
+    col=db.collection('spaces').doc(code).collection('items');
+    col.onSnapshot(s=>{items=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(e));
+  }).catch(e=>alert('Sign-in failed: '+e.message));
+  render();
+}
+$('#jGo').onclick=()=>{
+  const n=$('#jName').value.trim(),c=$('#jCode').value.trim().toLowerCase();
+  if(!n||c.length<6){$('#jErr').textContent='Enter your name and a code of 6+ characters.';return}
+  localStorage.me=me=n;localStorage.code=code=c;location.reload();
+};
+
+const forDate=d=>items.filter(i=>i.date===d&&i.type!=='note').sort((a,b)=>(a.type==='shift'?-1:0)-(b.type==='shift'?-1:0)||(a.start||'').localeCompare(b.start||''));
+function chip(i){
+  const mine=i.by===me,t=i.start?`${i.start}${i.end?'–'+i.end:''}`:'';
+  if(i.type==='shift')return `<div class="chip ${mine?'':'other'}">${esc(i.by)}: ${i.shiftType==='off'?'Day off':'Work '+t}</div>`;
+  return `<div class="chip ${mine?'':'other'}" data-id="${i.id}"><b>${esc(i.title)}</b><small>${t?t+' · ':''}${esc(i.by)}${i.notes?' · '+esc(i.notes):''}</small></div>`;
+}
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+  $('#fab').style.display=tab==='roster'?'none':'block';
+  const v=$('#view');
+  if(tab==='week'||tab==='roster'){
+    const e=addDays(weekStart,6);
+    $('#title').textContent=`${weekStart.getDate()} ${MONTHS[weekStart.getMonth()].slice(0,3)} – ${e.getDate()} ${MONTHS[e.getMonth()].slice(0,3)}`;
+  }else if(tab==='month')$('#title').textContent=`${MONTHS[monthRef.getMonth()]} ${monthRef.getFullYear()}`;
+  else $('#title').textContent='Lists';
+  $('#prev').style.visibility=$('#next').style.visibility=$('#today').style.visibility=tab==='notes'?'hidden':'visible';
+  if(tab==='week')v.innerHTML=weekView();
+  else if(tab==='month')v.innerHTML=monthView();
+  else if(tab==='roster'){if(document.activeElement&&v.contains(document.activeElement))return;v.innerHTML=rosterView();}
+  else v.innerHTML=notesView();
+  bind();
+}
+const legend=()=>`<div class="legend"><span class="dot"></span>${esc(me)} <span class="dot o"></span>Partner</div>`;
+
+function weekView(){
+  let h=legend();
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i),k=fmt(d),list=forDate(k);
+    h+=`<div class="card day ${k===fmt(new Date())?'today':''}"><h3>${DAYS[i]} ${d.getDate()}</h3>${list.map(chip).join('')||'<div class="empty">Nothing planned</div>'}</div>`;
+  }
+  return h;
+}
+function monthView(){
+  const y=monthRef.getFullYear(),m=monthRef.getMonth();
+  const first=new Date(y,m,1),start=monday(first);
+  let h=legend()+'<div class="card"><div class="grid">'+DAYS.map(d=>`<div class="h">${d[0]}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d=addDays(start,i),k=fmt(d),l=forDate(k);
+    const dim=d.getMonth()!==m?'style="opacity:.35"':'';
+    h+=`<button class="cell ${k===sel?'sel':''} ${k===fmt(new Date())?'tod':''}" data-day="${k}" ${dim}>${d.getDate()}<div class="dots">${[...new Set(l.map(x=>x.by===me?'':'o'))].map(c=>`<i class="${c}"></i>`).join('')}</div></button>`;
+  }
+  h+='</div></div>';
+  const d=parse(sel);
+  h+=`<div class="card day"><h3>${DAYS[(d.getDay()+6)%7]} ${d.getDate()} ${MONTHS[d.getMonth()]}</h3>${forDate(sel).map(chip).join('')||'<div class="empty">Nothing planned</div>'}</div>`;
+  return h;
+}
+function rosterView(){
+  let h='<p class="legend">Set your shifts for the week. Your partner sees them straight away.</p>';
+  for(let i=0;i<7;i++){
+    const d=addDays(weekStart,i),k=fmt(d);
+    const mine=items.find(x=>x.id===`shift_${me}_${k}`);
+    const theirs=items.filter(x=>x.type==='shift'&&x.date===k&&x.by!==me);
+    h+=`<div class="card"><div class="row"><b>${DAYS[i]} ${d.getDate()}</b>
+      <select data-k="${k}" data-f="shiftType"><option value="">–</option><option value="work" ${mine?.shiftType==='work'?'selected':''}>Work</option><option value="off" ${mine?.shiftType==='off'?'selected':''}>Off</option></select>
+      <input type="time" data-k="${k}" data-f="start" value="${mine?.start||''}" ${mine?.shiftType==='work'?'':'disabled'}>
+      <input type="time" data-k="${k}" data-f="end" value="${mine?.end||''}" ${mine?.shiftType==='work'?'':'disabled'}></div>
+      ${theirs.map(chip).join('')}</div>`;
+  }
+  return h;
+}
+function notesView(){
+  const n=items.filter(i=>i.type==='note').sort((a,b)=>(a.done?1:0)-(b.done?1:0)||(b.createdAt||0)-(a.createdAt||0));
+  return `<div class="card"><div class="row"><input id="newNote" placeholder="Add to list (groceries, to-do, ideas…)" style="flex:1"><button class="pri" id="addNote">Add</button></div>
+  ${n.map(i=>`<div class="note ${i.done?'done':''}"><input type="checkbox" data-n="${i.id}" ${i.done?'checked':''}><span>${esc(i.title)}</span><button class="del" data-rm="${i.id}">✕</button></div>`).join('')||'<div class="empty">Nothing here yet</div>'}</div>`;
+}
+
+function bind(){
+  document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{sel=b.dataset.day;render()});
+  document.querySelectorAll('.chip[data-id]').forEach(c=>c.onclick=()=>openSheet(items.find(i=>i.id===c.dataset.id)));
+  document.querySelectorAll('[data-f]').forEach(el=>el.onchange=()=>saveShift(el.dataset.k));
+  const an=$('#addNote');if(an)an.onclick=()=>{const t=$('#newNote').value.trim();if(t)col.add({type:'note',title:t,by:me,done:false,createdAt:Date.now()})};
+  document.querySelectorAll('[data-n]').forEach(c=>c.onchange=()=>col.doc(c.dataset.n).update({done:c.checked}));
+  document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>col.doc(b.dataset.rm).delete());
+}
+function saveShift(k){
+  const q=f=>document.querySelector(`[data-k="${k}"][data-f="${f}"]`).value;
+  const t=q('shiftType'),ref=col.doc(`shift_${me}_${k}`);
+  if(!t){ref.delete();return}
+  ref.set({type:'shift',date:k,by:me,shiftType:t,start:t==='work'?q('start'):'',end:t==='work'?q('end'):'',createdAt:Date.now()}).then(()=>{document.activeElement.blur();render()});
+}
+
+function openSheet(it){
+  it=it||{date:tab==='month'?sel:fmt(new Date())};
+  $('#sheetIn').innerHTML=`<h2 style="margin-top:0">${it.id?'Edit':'New'} event</h2>
+   <input id="eT" placeholder="What's on?" value="${esc(it.title||'')}">
+   <input id="eD" type="date" value="${it.date}">
+   <div class="row"><input id="eS" type="time" value="${it.start||''}"> to <input id="eE" type="time" value="${it.end||''}"></div>
+   <textarea id="eN" rows="2" placeholder="Notes (optional)">${esc(it.notes||'')}</textarea>
+   <div class="row"><button class="pri" id="eSave" style="flex:1">Save</button><button id="eCancel">Cancel</button>${it.id?'<button class="del" id="eDel">Delete</button>':''}</div>`;
+  $('#sheet').classList.add('open');
+  $('#eCancel').onclick=closeSheet;
+  $('#eSave').onclick=()=>{
+    const title=$('#eT').value.trim();if(!title){$('#eT').focus();return}
+    const data={type:'event',title,date:$('#eD').value,start:$('#eS').value,end:$('#eE').value,notes:$('#eN').value.trim()};
+    (it.id?col.doc(it.id).update(data):col.add({...data,by:me,createdAt:Date.now()})).then(closeSheet);
+  };
+  if(it.id)$('#eDel').onclick=()=>{if(confirm('Delete this event?'))col.doc(it.id).delete().then(closeSheet)};
+}
+const closeSheet=()=>$('#sheet').classList.remove('open');
+$('#sheet').onclick=e=>{if(e.target.id==='sheet')closeSheet()};
+$('#fab').onclick=()=>tab==='notes'?($('#newNote')&&$('#newNote').focus()):openSheet();
+
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{tab=b.dataset.t;render()});
+$('#prev').onclick=()=>{if(tab==='month')monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()-1,1);else weekStart=addDays(weekStart,-7);render()};
+$('#next').onclick=()=>{if(tab==='month')monthRef=new Date(monthRef.getFullYear(),monthRef.getMonth()+1,1);else weekStart=addDays(weekStart,7);render()};
+$('#today').onclick=()=>{weekStart=monday(new Date());monthRef=new Date();sel=fmt(new Date());render()};
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+boot();
+</script>
+</body>
+</html>
