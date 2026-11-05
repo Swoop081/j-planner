@@ -191,6 +191,7 @@ const needsAction=p=>p.action&&!p.actionDone;
 function pill(s){
   if(!s)return '<span class="pill none">–</span>';
   if(s.shiftType==='off')return '<span class="pill off">Off</span>';
+  if(s.shiftType==='wfh')return '<span class="pill" style="background:#0f766e">WFH</span>';
   if(!s.start||!s.end)return '<span class="pill none">–</span>';
   const ov=toMin(s.end)<=toMin(s.start)?' +1':'';
   return `<span class="pill" style="background:${s.color||autoColor(s.start)}">${range(s.start,s.end)}${ov}</span>`;
@@ -256,12 +257,13 @@ function brushBar(){
     const on=brush&&brush.kind==='tpl'&&brush.id===t.id;
     h+=`<button class="cb ${on?'on':''}" data-b="tpl:${t.id}" style="background:${t.color||autoColor(t.start)}">${range(t.start,t.end)}</button>`;
   });
+  h+=`<button class="cb ${brush&&brush.kind==='wfh'?'on':''}" data-b="wfh" style="background:#0f766e">WFH</button>`;
   h+=`<button class="cb off ${brush&&brush.kind==='off'?'on':''}" data-b="off">Off</button>`;
   h+=`<button class="cb clr ${brush&&brush.kind==='clear'?'on':''}" data-b="clear">Clear</button>`;
   h+=`<button class="cb edit" data-b="edit">${tpls.length?'Edit':'+ Shift templates'}</button></div>`;
   let hint;
   if(brush){
-    const what=brush.kind==='off'?'Day off':brush.kind==='clear'?'Clear':range(...(()=>{const t=items.find(i=>i.id===brush.id);return t?[t.start,t.end]:['',''];})());
+    const what=brush.kind==='off'?'Day off':brush.kind==='wfh'?'Work from home':brush.kind==='clear'?'Clear':range(...(()=>{const t=items.find(i=>i.id===brush.id);return t?[t.start,t.end]:['',''];})());
     hint=`<b>${what}</b> selected. Tap the days to apply, tap it again to stop.`;
   }else hint=tpls.length?'Pick a shift, then tap the days. Tap a day with nothing picked for custom times.':'Add your usual shifts so each day is one tap.';
   return h+`<div class="hint">${hint}</div>`;
@@ -275,7 +277,8 @@ function weekHours(by){
 
 function rosterView(){
   const p=partner(),today=fmt(new Date());
-  let h=`<div class="sum">Rostered this week: Me <b>${nf(weekHours(me))}h</b>${p?` · ${esc(p)} <b>${nf(weekHours(p))}h</b>`:''}</div>`;
+  const wfh=by=>{let c=0;for(let i=0;i<7;i++){const s=shiftOf(by,fmt(addDays(weekStart,i)));if(s&&s.shiftType==='wfh')c++}return c?` + ${c} WFH`:''};
+  let h=`<div class="sum">Rostered this week: Me <b>${nf(weekHours(me))}h</b>${wfh(me)}${p?` · ${esc(p)} <b>${nf(weekHours(p))}h</b>${wfh(p)}`:''}</div>`;
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i),k=fmt(d);
     const mine=shiftOf(me,k),theirs=p?shiftOf(p,k):null;
@@ -297,6 +300,7 @@ function applyDay(k){
   if(!brush){openDaySheet(k);return}
   if(brush.kind==='clear'){col.doc(sid(me,k)).delete();return}
   if(brush.kind==='off'){setShift(k,{shiftType:'off',start:'',end:'',color:''});return}
+  if(brush.kind==='wfh'){setShift(k,{shiftType:'wfh',start:'',end:'',color:'#0f766e'});return}
   const t=items.find(i=>i.id===brush.id);
   if(!t){brush=null;render();return}
   setShift(k,{shiftType:'work',start:t.start,end:t.end,color:t.color||autoColor(t.start)});
@@ -319,8 +323,9 @@ function openDaySheet(k){
    <div class="row"><input id="dS" type="time" value="${s&&s.start||''}"> to <input id="dE" type="time" value="${s&&s.end||''}"></div>
    <label class="chk"><input type="checkbox" id="dT"> Save these times as a template</label>
    <div class="row"><button class="pri" id="dSave" style="flex:1">Save shift</button></div>
-   <div class="row"><button id="dOff">Day off</button><button id="dClr" class="del">Clear</button><button id="dPlan">Add plan</button><button id="dX">Close</button></div>`);
+   <div class="row"><button id="dWfh">Work from home</button><button id="dOff">Day off</button><button id="dClr" class="del">Clear</button><button id="dPlan">Add plan</button><button id="dX">Close</button></div>`);
   $('#dX').onclick=closeSheet;
+  $('#dWfh').onclick=()=>{setShift(k,{shiftType:'wfh',start:'',end:'',color:'#0f766e'});closeSheet()};
   $('#dOff').onclick=()=>{setShift(k,{shiftType:'off',start:'',end:'',color:''});closeSheet()};
   $('#dClr').onclick=()=>{col.doc(sid(me,k)).delete();closeSheet()};
   $('#dPlan').onclick=()=>openPlanSheet({date:k,status:'tentative'});
@@ -491,6 +496,9 @@ function buildIcs(){
     const endDate=toMin(s.end)<=toMin(s.start)?fmt(addDays(parse(s.date),1)):s.date;
     push(s.id,['DTSTART:'+icsLocal(s.date,s.start),'DTEND:'+icsLocal(endDate,s.end),'SUMMARY:'+icsText(summary),...(mine?icsAlarms(s.date,s.start,summary):[])]);
   });
+  items.filter(i=>i.type==='shift'&&i.shiftType==='wfh'&&i.date>=a&&i.date<b&&(i.by===me||alertOpts.partner)).forEach(s=>{
+    push(s.id,['DTSTART;VALUE=DATE:'+s.date.replace(/-/g,''),'DTEND;VALUE=DATE:'+fmt(addDays(parse(s.date),1)).replace(/-/g,''),'SUMMARY:'+icsText((s.by===me?'':s.by+': ')+'Work from home'),'TRANSP:TRANSPARENT']);
+  });
   if(alertOpts.plans)items.filter(i=>i.type==='plan'&&i.date>=a&&i.date<b).forEach(p=>{
     const desc=[p.action&&!p.actionDone?'To do: '+p.action:'',p.notes].filter(Boolean).join('\n');
     const base=['SUMMARY:'+icsText(p.title),'STATUS:'+(p.status==='confirmed'?'CONFIRMED':'TENTATIVE'),...(desc?['DESCRIPTION:'+icsText(desc)]:[])];
@@ -529,7 +537,7 @@ function bind(){
   $$('[data-b]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.b;
     if(v==='edit'){openTplSheet();return}
-    const nb=v==='off'?{kind:'off'}:v==='clear'?{kind:'clear'}:{kind:'tpl',id:v.slice(4)};
+    const nb=v==='off'?{kind:'off'}:v==='wfh'?{kind:'wfh'}:v==='clear'?{kind:'clear'}:{kind:'tpl',id:v.slice(4)};
     brush=brush&&JSON.stringify(brush)===JSON.stringify(nb)?null:nb;
     render();
   });
