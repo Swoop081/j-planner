@@ -91,6 +91,11 @@ small{display:block;color:var(--mut);font-size:13px}
 .todo.over small{color:var(--bad)}
 .dayline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 8px}
 
+/* alerts */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
+.chip2{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:14px}
+.chip2.on{border-color:var(--me);background:color-mix(in srgb,var(--me) 14%,transparent);color:var(--me)}
+
 /* lists */
 .note{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
 .note.done span{text-decoration:line-through;color:var(--mut)}
@@ -137,7 +142,7 @@ input[type=time]{width:120px}
 <main id="view"></main>
 <button class="fab pri" id="fab">+</button>
 <div class="tabs">
-  <button data-t="roster" class="on">Roster</button><button data-t="month">Month</button><button data-t="notes">Lists</button>
+  <button data-t="roster" class="on">Roster</button><button data-t="month">Month</button><button data-t="notes">Lists</button><button data-t="alerts">Alerts</button>
 </div>
 </div>
 
@@ -220,7 +225,7 @@ $('#jGo').onclick=()=>{
 function render(){
   $$('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   $('#fab').style.display=tab==='month'?'block':'none';
-  ['#prev','#next','#today'].forEach(s=>$(s).style.visibility=tab==='notes'?'hidden':'visible');
+  ['#prev','#next','#today'].forEach(s=>$(s).style.visibility=(tab==='notes'||tab==='alerts')?'hidden':'visible');
   const v=$('#view'),sub=$('#sub');
   if(tab==='roster'){
     const e=addDays(weekStart,6);
@@ -229,6 +234,9 @@ function render(){
   }else if(tab==='month'){
     $('#title').textContent=`${MONTHS[monthRef.getMonth()]} ${monthRef.getFullYear()}`;
     sub.innerHTML='';v.innerHTML=monthView();
+  }else if(tab==='alerts'){
+    $('#title').textContent='Alerts';sub.innerHTML='';
+    v.innerHTML=alertsView();bindAlerts();return;
   }else{
     $('#title').textContent='Lists';sub.innerHTML='';
     if($('#noteList')){$('#noteList').innerHTML=noteRows();bindNotes();return}
@@ -428,6 +436,92 @@ function addNote(){const el=$('#newNote'),t=el.value.trim();if(!t)return;el.valu
 function bindNotes(){
   $$('[data-n]').forEach(c=>c.onchange=()=>col.doc(c.dataset.n).update({done:c.checked}));
   $$('[data-rm]').forEach(b=>b.onclick=()=>col.doc(b.dataset.rm).delete());
+}
+
+/* ---------- alerts (iPhone Calendar export) ---------- */
+let alertOpts={range:'4w',offs:['60','night'],plans:true,partner:false};
+try{Object.assign(alertOpts,JSON.parse(localStorage.alertOpts||'{}'))}catch(e){}
+const saveAlertOpts=()=>{try{localStorage.alertOpts=JSON.stringify(alertOpts)}catch(e){}};
+const OFFS=[['0','At start'],['30','30 min before'],['60','1 hour before'],['night','Night before, 8pm']];
+
+function alertsView(){
+  const p=partner(),o=alertOpts;
+  return `<div class="card"><h3 style="margin-top:0">Send shifts to your iPhone Calendar</h3>
+    <div class="hint">Calendar alerts go off even when this app is closed. Send again after a roster change and the same events update.</div>
+    <div class="seg"><button data-ar="week" class="${o.range==='week'?'on':''}">This week</button><button data-ar="4w" class="${o.range==='4w'?'on':''}">Next 4 weeks</button></div>
+    <div class="hint" style="margin-top:12px">Alert me</div>
+    <div class="chips">${OFFS.map(([k,l])=>`<button class="chip2 ${o.offs.includes(k)?'on':''}" data-ao="${k}">${o.offs.includes(k)?'✓ ':''}${l}</button>`).join('')}</div>
+    <label class="chk"><input type="checkbox" data-aq="plans" ${o.plans?'checked':''}> Include plans and bookings</label>
+    ${p?`<label class="chk"><input type="checkbox" data-aq="partner" ${o.partner?'checked':''}> Include ${esc(p)}'s shifts (no alerts)</label>`:''}
+    <button class="pri" id="aGo" style="width:100%;margin-top:6px;padding:14px;font-weight:600">Add to Calendar</button>
+    <button id="aDl" style="width:100%;margin-top:6px;background:none;color:var(--me)">Download the file instead</button>
+    <div class="hint" id="aMsg" style="margin-top:6px"></div></div>
+    <div class="card"><h3 style="margin-top:0">Good to know</h3>
+    <div class="hint">These are Calendar alerts, not Clock alarms. For a loud wake-up on early starts, keep a Clock alarm as well.</div>
+    <div class="hint">If you remove a shift after sending it, delete that event in Calendar yourself. Changed shifts update on their own.</div></div>`;
+}
+function bindAlerts(){
+  $$('[data-ar]').forEach(b=>b.onclick=()=>{alertOpts.range=b.dataset.ar;saveAlertOpts();render()});
+  $$('[data-ao]').forEach(b=>b.onclick=()=>{const k=b.dataset.ao,i=alertOpts.offs.indexOf(k);if(i>=0)alertOpts.offs.splice(i,1);else alertOpts.offs.push(k);saveAlertOpts();render()});
+  $$('[data-aq]').forEach(c=>c.onchange=()=>{alertOpts[c.dataset.aq]=c.checked;saveAlertOpts()});
+  $('#aGo').onclick=()=>exportCalendar(false);
+  $('#aDl').onclick=()=>exportCalendar(true);
+}
+
+const icsText=s=>String(s??'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+function icsFold(l){let o='';while(l.length>73){o+=l.slice(0,73)+'\r\n ';l=l.slice(73)}return o+l}
+const icsLocal=(d,t)=>d.replace(/-/g,'')+'T'+t.replace(':','')+'00';
+function icsAlarms(date,time,summary){
+  const[y,m,d]=date.split('-').map(Number),[hh,mm]=time.split(':').map(Number);
+  const start=new Date(y,m-1,d,hh,mm);
+  return alertOpts.offs.flatMap(k=>{
+    const mins=k==='night'?Math.round((start-new Date(y,m-1,d-1,20,0))/60000):+k;
+    if(!(mins>=0))return [];
+    const label=k==='0'?'Starting now':k==='night'?'Tomorrow':`In ${mins>=60?mins/60+' hr':mins+' min'}`;
+    return ['BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(`${label}: ${summary}`),'TRIGGER:'+(mins?`-PT${mins}M`:'PT0S'),'END:VALARM'];
+  });
+}
+function buildIcs(){
+  const from=monday(new Date()),a=fmt(from),b=fmt(addDays(from,alertOpts.range==='week'?7:28));
+  const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const seq=Math.floor(Date.now()/1000),ev=[];
+  const push=(uid,lines)=>ev.push(['BEGIN:VEVENT','UID:'+uid+'@j-planner','DTSTAMP:'+stamp,'LAST-MODIFIED:'+stamp,'SEQUENCE:'+seq,...lines,'END:VEVENT']);
+  items.filter(i=>i.type==='shift'&&i.shiftType==='work'&&i.start&&i.end&&i.date>=a&&i.date<b&&(i.by===me||alertOpts.partner)).forEach(s=>{
+    const mine=s.by===me,summary=(mine?'':s.by+': ')+'Work '+range(s.start,s.end);
+    const endDate=toMin(s.end)<=toMin(s.start)?fmt(addDays(parse(s.date),1)):s.date;
+    push(s.id,['DTSTART:'+icsLocal(s.date,s.start),'DTEND:'+icsLocal(endDate,s.end),'SUMMARY:'+icsText(summary),...(mine?icsAlarms(s.date,s.start,summary):[])]);
+  });
+  if(alertOpts.plans)items.filter(i=>i.type==='plan'&&i.date>=a&&i.date<b).forEach(p=>{
+    const desc=[p.action&&!p.actionDone?'To do: '+p.action:'',p.notes].filter(Boolean).join('\n');
+    const base=['SUMMARY:'+icsText(p.title),'STATUS:'+(p.status==='confirmed'?'CONFIRMED':'TENTATIVE'),...(desc?['DESCRIPTION:'+icsText(desc)]:[])];
+    if(p.time){
+      const[y,m,d]=p.date.split('-').map(Number),[hh,mm]=p.time.split(':').map(Number);
+      const e=new Date(y,m-1,d,hh+1,mm);
+      push(p.id,['DTSTART:'+icsLocal(p.date,p.time),'DTEND:'+icsLocal(fmt(e),pad(e.getHours())+':'+pad(e.getMinutes())),...base,...icsAlarms(p.date,p.time,p.title)]);
+    }else{
+      push(p.id,['DTSTART;VALUE=DATE:'+p.date.replace(/-/g,''),'DTEND;VALUE=DATE:'+fmt(addDays(parse(p.date),1)).replace(/-/g,''),...base,'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsText(p.title),'TRIGGER:-PT15H','END:VALARM']);
+    }
+  });
+  if(!ev.length)return null;
+  return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//J-Planner//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',...ev.flat(),'END:VCALENDAR'].map(icsFold).join('\r\n')+'\r\n';
+}
+async function exportCalendar(download){
+  const msg=$('#aMsg'),text=buildIcs();
+  if(!text){msg.textContent='Nothing to send yet. Set some shifts on the Roster tab first.';return}
+  const count=(text.match(/BEGIN:VEVENT/g)||[]).length;
+  const blob=new Blob([text],{type:'text/calendar'}),name='j-planner.ics';
+  if(!download){
+    try{
+      const file=new File([blob],name,{type:'text/calendar'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:'J-Planner'});
+        msg.textContent=`${count} events shared. Choose Calendar, then tap Add All.`;return;
+      }
+    }catch(e){if(e&&e.name==='AbortError')return}
+  }
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();
+  msg.textContent=`${count} events ready. Open the downloaded file, then tap Add All.`;
 }
 
 /* ---------- wiring ---------- */
