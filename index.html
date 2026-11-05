@@ -91,6 +91,26 @@ small{display:block;color:var(--mut);font-size:13px}
 .todo.over small{color:var(--bad)}
 .dayline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:4px 0 8px}
 
+/* month overview */
+.mw{background:var(--card);border-radius:14px;padding:6px;margin-bottom:8px}
+.mrow{display:grid;grid-template-columns:44px repeat(7,minmax(0,1fr));gap:2px;margin-top:3px;align-items:stretch}
+.ml{font-size:11px;font-weight:600;color:var(--mut);display:flex;align-items:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:2px}
+.md{display:flex;flex-direction:column;align-items:center;border-radius:8px;padding:3px 0;background:none;font-size:14px;font-weight:600;line-height:1.1}
+.md small{font-size:10px;color:var(--mut);font-weight:500}
+.md.tod{background:var(--me);color:#fff}
+.md.tod small{color:#ffffffcc}
+.md.sel{outline:2px solid var(--text);outline-offset:-2px}
+.mc{display:flex;align-items:center;justify-content:center;text-align:center;min-height:36px;border-radius:7px;font-size:11px;font-weight:700;line-height:1.1;padding:0 1px;overflow:hidden;background:color-mix(in srgb,var(--c) 16%,transparent);color:color-mix(in srgb,var(--c) 62%,#000)}
+.mc.none{background:none}
+.md.dim,.mc.dim,.mpc.dim{opacity:.4}
+.mpc{min-width:0;min-height:14px}
+.mp{font-size:10px;font-weight:600;line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:1px 3px;border-radius:4px;margin-bottom:1px}
+.mp.tentative{background:color-mix(in srgb,var(--warn) 22%,transparent);color:#8a5a00}
+.mp.confirmed{background:color-mix(in srgb,var(--ok) 20%,transparent);color:#1e7a37}
+.mp.act{background:color-mix(in srgb,var(--bad) 18%,transparent);color:#b3261e}
+.mp.more{color:var(--mut)}
+@media(prefers-color-scheme:dark){.mc{color:color-mix(in srgb,var(--c) 70%,#fff)}.mp.tentative{color:#ffd27a}.mp.confirmed{color:#7be495}.mp.act{color:#ff8f88}}
+
 /* alerts */
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 10px}
 .chip2{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:var(--bg);font-weight:600;font-size:14px}
@@ -188,10 +208,12 @@ const plansOn=k=>items.filter(i=>i.type==='plan'&&i.date===k).sort(byDT);
 const byDT=(a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''));
 const needsAction=p=>p.action&&!p.actionDone;
 
+const DT={wfh:{l:'WFH',c:'#0f766e',n:'Work from home'},office:{l:'Office',c:'#15803d',n:'Office'},leave:{l:'Leave',c:'#a16207',n:'Leave'}};
+
 function pill(s){
   if(!s)return '<span class="pill none">–</span>';
   if(s.shiftType==='off')return '<span class="pill off">Off</span>';
-  if(s.shiftType==='wfh')return '<span class="pill" style="background:#0f766e">WFH</span>';
+  if(DT[s.shiftType])return `<span class="pill" style="background:${DT[s.shiftType].c}">${DT[s.shiftType].l}</span>`;
   if(!s.start||!s.end)return '<span class="pill none">–</span>';
   const ov=toMin(s.end)<=toMin(s.start)?' +1':'';
   return `<span class="pill" style="background:${s.color||autoColor(s.start)}">${range(s.start,s.end)}${ov}</span>`;
@@ -257,13 +279,13 @@ function brushBar(){
     const on=brush&&brush.kind==='tpl'&&brush.id===t.id;
     h+=`<button class="cb ${on?'on':''}" data-b="tpl:${t.id}" style="background:${t.color||autoColor(t.start)}">${range(t.start,t.end)}</button>`;
   });
-  h+=`<button class="cb ${brush&&brush.kind==='wfh'?'on':''}" data-b="wfh" style="background:#0f766e">WFH</button>`;
+  Object.entries(DT).forEach(([k,t])=>{h+=`<button class="cb ${brush&&brush.kind===k?'on':''}" data-b="${k}" style="background:${t.c}">${t.l}</button>`});
   h+=`<button class="cb off ${brush&&brush.kind==='off'?'on':''}" data-b="off">Off</button>`;
   h+=`<button class="cb clr ${brush&&brush.kind==='clear'?'on':''}" data-b="clear">Clear</button>`;
   h+=`<button class="cb edit" data-b="edit">${tpls.length?'Edit':'+ Shift templates'}</button></div>`;
   let hint;
   if(brush){
-    const what=brush.kind==='off'?'Day off':brush.kind==='wfh'?'Work from home':brush.kind==='clear'?'Clear':range(...(()=>{const t=items.find(i=>i.id===brush.id);return t?[t.start,t.end]:['',''];})());
+    const what=brush.kind==='off'?'Day off':DT[brush.kind]?DT[brush.kind].n:brush.kind==='clear'?'Clear':range(...(()=>{const t=items.find(i=>i.id===brush.id);return t?[t.start,t.end]:['',''];})());
     hint=`<b>${what}</b> selected. Tap the days to apply, tap it again to stop.`;
   }else hint=tpls.length?'Pick a shift, then tap the days. Tap a day with nothing picked for custom times.':'Add your usual shifts so each day is one tap.';
   return h+`<div class="hint">${hint}</div>`;
@@ -277,7 +299,7 @@ function weekHours(by){
 
 function rosterView(){
   const p=partner(),today=fmt(new Date());
-  const wfh=by=>{let c=0;for(let i=0;i<7;i++){const s=shiftOf(by,fmt(addDays(weekStart,i)));if(s&&s.shiftType==='wfh')c++}return c?` + ${c} WFH`:''};
+  const wfh=by=>{const c={};for(let i=0;i<7;i++){const s=shiftOf(by,fmt(addDays(weekStart,i)));if(s&&DT[s.shiftType])c[s.shiftType]=(c[s.shiftType]||0)+1}const t=Object.entries(c).map(([k,n])=>`${n} ${DT[k].l}`).join(', ');return t?` + ${t}`:''};
   let h=`<div class="sum">Rostered this week: Me <b>${nf(weekHours(me))}h</b>${wfh(me)}${p?` · ${esc(p)} <b>${nf(weekHours(p))}h</b>${wfh(p)}`:''}</div>`;
   for(let i=0;i<7;i++){
     const d=addDays(weekStart,i),k=fmt(d);
@@ -300,7 +322,7 @@ function applyDay(k){
   if(!brush){openDaySheet(k);return}
   if(brush.kind==='clear'){col.doc(sid(me,k)).delete();return}
   if(brush.kind==='off'){setShift(k,{shiftType:'off',start:'',end:'',color:''});return}
-  if(brush.kind==='wfh'){setShift(k,{shiftType:'wfh',start:'',end:'',color:'#0f766e'});return}
+  if(DT[brush.kind]){setShift(k,{shiftType:brush.kind,start:'',end:'',color:DT[brush.kind].c});return}
   const t=items.find(i=>i.id===brush.id);
   if(!t){brush=null;render();return}
   setShift(k,{shiftType:'work',start:t.start,end:t.end,color:t.color||autoColor(t.start)});
@@ -323,9 +345,9 @@ function openDaySheet(k){
    <div class="row"><input id="dS" type="time" value="${s&&s.start||''}"> to <input id="dE" type="time" value="${s&&s.end||''}"></div>
    <label class="chk"><input type="checkbox" id="dT"> Save these times as a template</label>
    <div class="row"><button class="pri" id="dSave" style="flex:1">Save shift</button></div>
-   <div class="row"><button id="dWfh">Work from home</button><button id="dOff">Day off</button><button id="dClr" class="del">Clear</button><button id="dPlan">Add plan</button><button id="dX">Close</button></div>`);
+   <div class="row">${Object.entries(DT).map(([k,t])=>`<button data-dt="${k}">${t.n}</button>`).join('')}<button id="dOff">Day off</button><button id="dClr" class="del">Clear</button><button id="dPlan">Add plan</button><button id="dX">Close</button></div>`);
   $('#dX').onclick=closeSheet;
-  $('#dWfh').onclick=()=>{setShift(k,{shiftType:'wfh',start:'',end:'',color:'#0f766e'});closeSheet()};
+  $$('[data-dt]').forEach(b=>b.onclick=()=>{const t=DT[b.dataset.dt];setShift(k,{shiftType:b.dataset.dt,start:'',end:'',color:t.c});closeSheet()});
   $('#dOff').onclick=()=>{setShift(k,{shiftType:'off',start:'',end:'',color:''});closeSheet()};
   $('#dClr').onclick=()=>{col.doc(sid(me,k)).delete();closeSheet()};
   $('#dPlan').onclick=()=>openPlanSheet({date:k,status:'tentative'});
@@ -375,6 +397,32 @@ function planRow(p){
     <div class="tags"><span class="tag ${p.status==='confirmed'?'confirmed':'tentative'}">${p.status==='confirmed'?'Confirmed':'Tentative'}</span>${need?`<span class="tag act">${esc(p.action)}</span>`:''}</div></div>`;
 }
 
+const tc=t=>{let[h,m]=t.split(':').map(Number);h=h%12||12;return m?`${h}:${pad(m)}`:`${h}`};
+function mcell(s,k,cls){
+  const d=`data-day="${k}"`;
+  if(!s)return `<div class="mc none ${cls}" ${d}></div>`;
+  if(s.shiftType==='off')return `<div class="mc ${cls}" ${d} style="--c:#8e8e93">Off</div>`;
+  if(DT[s.shiftType])return `<div class="mc ${cls}" ${d} style="--c:${DT[s.shiftType].c}">${DT[s.shiftType].l}</div>`;
+  if(!s.start||!s.end)return `<div class="mc none ${cls}" ${d}></div>`;
+  return `<div class="mc ${cls}" ${d} style="--c:${s.color||autoColor(s.start)}">${tc(s.start)}–${tc(s.end)}</div>`;
+}
+function monthGrid(y,m,today){
+  const p=partner(),start=monday(new Date(y,m,1)),last=new Date(y,m+1,0);
+  const weeks=Math.ceil((Math.round((last-start)/86400000)+1)/7);
+  let h='';
+  for(let w=0;w<weeks;w++){
+    const days=[...Array(7)].map((_,i)=>addDays(start,w*7+i)),ks=days.map(fmt),dim=days.map(d=>d.getMonth()!==m?'dim':'');
+    h+=`<div class="mw"><div class="mrow"><div class="ml"></div>${days.map((d,i)=>`<button class="md ${dim[i]} ${ks[i]===today?'tod':''} ${ks[i]===sel?'sel':''}" data-day="${ks[i]}">${d.getDate()}<small>${DAYS[i][0]}</small></button>`).join('')}</div>`;
+    h+=`<div class="mrow"><div class="ml">Me</div>${ks.map((k,i)=>mcell(shiftOf(me,k),k,dim[i])).join('')}</div>`;
+    if(p)h+=`<div class="mrow"><div class="ml">${esc(p)}</div>${ks.map((k,i)=>mcell(shiftOf(p,k),k,dim[i])).join('')}</div>`;
+    if(ks.some(k=>plansOn(k).length))h+=`<div class="mrow"><div class="ml">Plans</div>${ks.map((k,i)=>{
+      const pl=plansOn(k);
+      return `<div class="mpc ${dim[i]}" data-day="${k}">${pl.slice(0,2).map(x=>`<div class="mp ${needsAction(x)?'act':x.status==='confirmed'?'confirmed':'tentative'}">${esc(x.title)}</div>`).join('')}${pl.length>2?`<div class="mp more">+${pl.length-2}</div>`:''}</div>`}).join('')}</div>`;
+    h+='</div>';
+  }
+  return h+'<div class="hint" style="margin:0 4px 6px"><span style="color:var(--warn)">●</span> tentative &nbsp;<span style="color:var(--ok)">●</span> confirmed &nbsp;<span style="color:var(--bad)">●</span> needs action. Tap a day for details.</div>';
+}
+
 function monthView(){
   const y=monthRef.getFullYear(),m=monthRef.getMonth(),today=fmt(new Date());
   const plans=items.filter(i=>i.type==='plan');
@@ -384,14 +432,7 @@ function monthView(){
     h+=`<div class="sec">To action</div><div class="card">${pending.map(p=>`
       <div class="todo ${p.date<today?'over':''}"><input type="checkbox" data-act="${p.id}"><div class="info" data-plan="${p.id}"><b>${esc(p.action)}</b><small>${esc(p.title)} · ${dateLabel(p.date)}${p.date<today?' · overdue':''}</small></div></div>`).join('')}</div>`;
   }
-  const start=monday(new Date(y,m,1));
-  h+='<div class="card"><div class="grid">'+DAYS.map(d=>`<div class="h">${d[0]}</div>`).join('');
-  for(let i=0;i<42;i++){
-    const d=addDays(start,i),k=fmt(d),pl=plansOn(k);
-    const kinds=[...new Set(pl.map(x=>needsAction(x)?'act':x.status==='confirmed'?'confirmed':'tentative'))];
-    h+=`<button class="cell ${k===sel?'sel':''} ${k===today?'tod':''}" data-day="${k}" ${d.getMonth()!==m?'style="opacity:.35"':''}>${d.getDate()}<div class="dots">${kinds.map(c=>`<i class="${c}"></i>`).join('')}</div></button>`;
-  }
-  h+='</div><div class="hint" style="margin-top:8px"><span style="color:var(--warn)">●</span> tentative &nbsp;<span style="color:var(--ok)">●</span> confirmed &nbsp;<span style="color:var(--bad)">●</span> needs action</div></div>';
+  h+=monthGrid(y,m,today);
 
   const sd=parse(sel),p=partner(),sp=plansOn(sel);
   h+=`<div class="sec">${dateLabel(sel)}</div><div class="card"><div class="dayline"><span class="who">Me</span>${pill(shiftOf(me,sel))}${p?`<span class="who">${esc(p)}</span>${pill(shiftOf(p,sel))}`:''}</div>
@@ -496,8 +537,8 @@ function buildIcs(){
     const endDate=toMin(s.end)<=toMin(s.start)?fmt(addDays(parse(s.date),1)):s.date;
     push(s.id,['DTSTART:'+icsLocal(s.date,s.start),'DTEND:'+icsLocal(endDate,s.end),'SUMMARY:'+icsText(summary),...(mine?icsAlarms(s.date,s.start,summary):[])]);
   });
-  items.filter(i=>i.type==='shift'&&i.shiftType==='wfh'&&i.date>=a&&i.date<b&&(i.by===me||alertOpts.partner)).forEach(s=>{
-    push(s.id,['DTSTART;VALUE=DATE:'+s.date.replace(/-/g,''),'DTEND;VALUE=DATE:'+fmt(addDays(parse(s.date),1)).replace(/-/g,''),'SUMMARY:'+icsText((s.by===me?'':s.by+': ')+'Work from home'),'TRANSP:TRANSPARENT']);
+  items.filter(i=>i.type==='shift'&&DT[i.shiftType]&&i.date>=a&&i.date<b&&(i.by===me||alertOpts.partner)).forEach(s=>{
+    push(s.id,['DTSTART;VALUE=DATE:'+s.date.replace(/-/g,''),'DTEND;VALUE=DATE:'+fmt(addDays(parse(s.date),1)).replace(/-/g,''),'SUMMARY:'+icsText((s.by===me?'':s.by+': ')+DT[s.shiftType].n),'TRANSP:TRANSPARENT']);
   });
   if(alertOpts.plans)items.filter(i=>i.type==='plan'&&i.date>=a&&i.date<b).forEach(p=>{
     const desc=[p.action&&!p.actionDone?'To do: '+p.action:'',p.notes].filter(Boolean).join('\n');
@@ -537,7 +578,7 @@ function bind(){
   $$('[data-b]').forEach(b=>b.onclick=()=>{
     const v=b.dataset.b;
     if(v==='edit'){openTplSheet();return}
-    const nb=v==='off'?{kind:'off'}:v==='wfh'?{kind:'wfh'}:v==='clear'?{kind:'clear'}:{kind:'tpl',id:v.slice(4)};
+    const nb=v==='off'?{kind:'off'}:DT[v]?{kind:v}:v==='clear'?{kind:'clear'}:{kind:'tpl',id:v.slice(4)};
     brush=brush&&JSON.stringify(brush)===JSON.stringify(nb)?null:nb;
     render();
   });
